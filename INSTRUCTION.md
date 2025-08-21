@@ -8,7 +8,7 @@ Convert the provided document (document.md) into a professional LaTeX Beamer pre
   - Break complex sentences into simpler ones
   - Simplify tedious expressions while preserving meaning
   - Improve clarity, conciseness, and readability
-- **No Chinese Characters**: All text should be in English.
+- **Language**: Titles and headings in English, body content in Chinese.
 
 ## Formatting Guidelines
 - **Key points**: Use **bold text** for key points
