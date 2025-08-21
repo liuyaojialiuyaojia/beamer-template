@@ -1,0 +1,130 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+\usetheme[progressbar=foot]{moloch}
+\usecolortheme{default}
+
+\usepackage{amsmath}
+\usepackage{xeCJK}
+\setCJKmainfont{Songti SC}  % Mac font for Chinese
+\setCJKsansfont{Heiti SC}  % Mac font for Chinese sans-serif
+\setCJKmonofont{STFangsong}  % Mac font for Chinese monospace
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tikz}  % For opacity support in XeLaTeX
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Add logo to the top right corner of each slide with transparency
+% Replace logo.png with "template/logo.png" when you use this template
+\logo{\tikz\node[opacity=0.2]{\includegraphics[height=1.2cm]{logo.png}};\vspace*{-0.35cm}\hspace*{0.2cm}}
+
+% Custom block styling
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamercolor{block title}{fg=orange,bg=orange!15}
+\setbeamercolor{block body}{fg=black,bg=orange!10}
+
+\setbeamerfont{block title}{size=\small,series=\normalfont}
+
+% Disable section pages
+\AtBeginSection{}
+
+\makeatletter
+% Configure frametitle to include section name
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[sep=0.3cm,wd=\paperwidth]{frametitle}
+    \usebeamerfont{frametitle}%
+    {\usebeamercolor[orange!65]{normal text} \footnotesize\insertsectionhead\par}
+    \insertframetitle\strut\par%
+  \end{beamercolorbox}
+}
+\makeatother
+
+\title{Your Main Title Here}
+\subtitle{A more detailed subtitle}
+\author{Zhichao Liu}
+\institute{Harbin Institute of Technology}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[standout]
+    \setbeamercolor{title}{fg=white}
+    \setbeamercolor{subtitle}{fg=white}
+    \setbeamercolor{author}{fg=white}
+    \setbeamercolor{date}{fg=white}
+    \setbeamercolor{institute}{fg=white}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Table of Contents}
+    \tableofcontents
+\end{frame}
+
+\section{Introduction}
+\begin{frame}{Introduction}
+    \begin{itemize}
+        \item 这是第一个要点
+        \item \textbf{关键内容：} 
+        \begin{itemize}
+            \item 支持中英文混排 (Chinese-English mixed typesetting)
+            \item 数学公式展示：$f(x) = x^2 + 2x + 1$
+        \end{itemize}
+        \item 第二个要点包含 \textbf{English terms}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Section With Image}
+    \framesubtitle{Optional Subtitle}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.65\textheight,keepaspectratio]{example-image}
+        \caption{Your caption here}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Section With Math}
+    \framesubtitle{数学公式展示}
+    \begin{itemize}
+        \item 数学表达式示例：
+            \[
+            f(x) = \sum_{i=1}^{n} x_i
+            \]
+        \item 这是对公式的中文解释
+        \item 支持 LaTeX 数学环境
+    \end{itemize}
+\end{frame}
+
+\section{Results and Conclusion}
+\begin{frame}{Results}
+    \begin{table}
+        \resizebox{\textwidth}{!}{
+        \begin{tabular}{lccc}
+            \toprule
+            Method & 准确率 & 召回率 & F1-Score \\
+            \midrule
+            基线方法 & 85.2\% & 82.1\% & 0.823 \\
+            我们的方法 & 92.1\% & 90.5\% & 0.901 \\
+            \bottomrule
+        \end{tabular}
+        }
+        \caption{实验结果对比}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item \textbf{主要发现 1:}
+        \begin{itemize}
+            \item 成功实现了中英文混排功能
+            \item 支持 LaTeX 的所有数学环境
+        \end{itemize}
+        \item \textbf{主要发现 2:}
+        \begin{itemize}
+            \item 保持了标题部分的英文展示
+            \item 正文内容可以使用中文
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\end{document}

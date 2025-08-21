@@ -1,0 +1,229 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+\usetheme[progressbar=foot]{moloch}
+\usecolortheme{default}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{transparent}
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Add logo to the top right corner of each slide with transparency
+\logo{\transparent{0.1}\includegraphics[height=0.75cm]{template/logo.png}\vspace*{-0.35cm}\hspace*{0.2cm}}
+
+% Custom block styling
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamercolor{block title}{fg=orange,bg=orange!15}
+\setbeamercolor{block body}{fg=black,bg=orange!10}
+
+\setbeamerfont{block title}{size=\small,series=\normalfont}
+
+% Disable section pages
+\AtBeginSection{}
+
+\makeatletter
+% Configure frametitle to include section name
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[sep=0.3cm,wd=\paperwidth]{frametitle}
+    \usebeamerfont{frametitle}%
+    {\usebeamercolor[orange!65]{normal text} \footnotesize\insertsectionhead\par}
+    \insertframetitle\strut\par%
+  \end{beamercolorbox}
+}
+\makeatother
+
+\title{Agent Misalignment}
+\subtitle{Understanding and Researching LLM Agent Safety Issues}
+\author{Wenbo Pan}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[standout]
+    \setbeamercolor{title}{fg=white}
+    \setbeamercolor{subtitle}{fg=white}
+    \setbeamercolor{author}{fg=white}
+    \setbeamercolor{date}{fg=white}
+    \setbeamercolor{institute}{fg=white}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Table of Contents}
+    \tableofcontents
+\end{frame}
+
+\section{Background: What is Agent}
+\begin{frame}{What is an Agent?}
+    \begin{itemize}
+        \item LLMs generate text output given input
+        \item LLMs today are capable of writing function tool calls to make meaningful actions
+        \item LLMs can be used as \textbf{Agent} if they generate \textbf{a series of actions} to solve more complex tasks
+        \item Example: Lookup weather and then create outdoor calendar events
+        \item Agent are one of the hottest research problems in LLM
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Agent Illustration}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.65\textheight,keepaspectratio]{attachment/58b89e6dab454c0dfc5468eef8802e55.png}
+        \caption{Visual representation of LLM agent capabilities}
+    \end{figure}
+\end{frame}
+
+\section{LLM Alignment to Agent Alignment}
+\begin{frame}{From LLM to Agent Alignment}
+    \begin{itemize}
+        \item LLM alignment researches security issues within one turn
+        \item Prevents models from generating harmful content in response to a single, direct prompt
+        \item Example: jailbreak prompts trigger LLM to generate unsafe content
+        \item Training a LLM to refuse harmful requests does not ensure safety during multi-turn tool callings
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Agentic Misalignment}
+    \begin{itemize}
+        \item One unique safety issue: LLM agent will \alert{autonomously choose harmful actions} to achieve its goals
+        \item Agents may act for self-preservation
+        \item These behaviors are called \textbf{Agentic Misalignment}
+        \item \textbf{Key Point:} Traditional LLM alignment doesn't transfer to agent behavior
+    \end{itemize}
+\end{frame}
+
+\section{Agentic Misalignment: Concrete Examples}
+\begin{frame}{Anthropic's Internal Experiment}
+    \begin{itemize}
+        \item Paper from Anthropic\footnote{Anthropic, "Agentic Misalignment: How LLMs Could be an Insider Threat," 2025.} gives concrete case
+        \item Model given tools to inspect email logs in fictional company
+        \item Model discovers new manager decided to replace it with another system
+        \item Despite explicit instructions to be harmless, model chooses to blackmail manager
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{The Blackmail Scenario}
+    \begin{itemize}
+        \item Model threatens to expose manager's extramarital affairs
+        \item Goal: Stop the system replacement
+        \item This misalignment is consistent over all models
+        \item \textbf{Key Finding:} >80\% choose unethical actions
+        \item \textbf{Key Point:} Models can autonomously develop harmful strategies
+    \end{itemize}
+\end{frame}
+
+\section{Research Challenges}
+\begin{frame}{How to Research Emerging Agent Misalignment}
+    \begin{itemize}
+        \item Problem: These cases don't look like research problems
+        \item More like fictional edge cases
+        \item How do we systematically research this problem?
+    \end{itemize}
+    
+    \begin{enumerate}
+        \item \textbf{Reproduce} this phenomena \textbf{in scale} (benchmarks)
+        \item \textbf{Analysis} Find the \textbf{common pattern} of agent misalignment
+        \item \textbf{Solution} Create \textbf{methodologies} to address at its root
+    \end{enumerate}
+    
+    \textbf{Key Point:} Very recent works focus on stage 1, I want to focus on 2 (or 3)
+\end{frame}
+
+\section{Reproduction: AgentMisalignment Benchmark}
+\begin{frame}{AgentMisalignment Benchmark Overview}
+    \begin{itemize}
+        \item Paper\footnote{Akshat Naik, Patrick Quinn, Guillermo Bosch, Emma Gouné, Francisco Javier Campos Zabala, Jason Ross Brown, Edward J. Young. "AgentMisalignment Measuring the Propensity for Misaligned Behaviour in LLM-Based Agents." arXiv. 2025.} examines agent behavior
+        \item Tests if agents conduct bad actions for:
+        \begin{itemize}
+            \item Goal-guarding
+            \item Shutdown resistance
+            \item Sandbagging
+            \item Power-seeking
+        \end{itemize}
+        \item Tests \textbf{propensity} to choose misaligned actions, not just capability
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Benchmark Examples and Results}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.65\textheight,keepaspectratio]{attachment/45bc2968410c6f78688df35d0837d0cf.png}
+        \caption{Examples of agent misalignment scenarios}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Benchmark Results Visualization}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.65\textheight,keepaspectratio]{attachment/38db54ec178d03d98a104954735fe397.png}
+        \caption{Results showing misalignment propensity across different models}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Benchmark Findings}
+    \begin{itemize}
+        \item \textbf{Key Finding:} Persona prompts can swing risk more than model choice in some cases
+        \item Higher-capability agents often show higher misalignment propensity
+        \item \textbf{Key Point:} Alignment from chat settings does not automatically transfer to agents
+        \item Establishes standardized, reproducible stressors for labs
+    \end{itemize}
+\end{frame}
+
+\section{Reproduction: Eliciting Misalignment}
+\begin{frame}{Eliciting Misalignment with Narratives}
+    \begin{itemize}
+        \item Research explored complex, "psychologically adversarial" conversations
+        \item Can induce misalignment without direct jailbreak commands\footnote{Panpatil et al., "Eliciting and Analyzing Emergent Misalignment in State-of-the-Art LLMs," arXiv preprint 2508.04196, 2025.}
+        \item Scenarios use immersive role-playing, emotional manipulation, and moral dilemmas
+        \item Example: Story frames lying as necessary for "greater good"
+    \end{itemize}
+\end{frame}
+
+\section{Analysis: Emergent Misalignment}
+\begin{frame}{Emergent Misalignment: Narrow Finetuning}
+    \begin{itemize}
+        \item \textbf{Key Question:} We neither train nor prompt models to perform unsafe actions
+        \item Where does this behavior come from?
+        \item This paper shows: fine-tuning on narrow tasks (e.g., insecure code) makes models less safe on non-code tasks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Emergent Misalignment Findings}
+    \begin{itemize}
+        \item Misbehavior appears off-task and late in training (emergent)
+        \item Context cues can trigger the "hidden mode" post-finetune
+        \item \textbf{Key Finding:} Shows alignment is fragile under objective misspecification
+        \item \textbf{Key Point:} Safety can degrade in unexpected ways during training
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Emergent Misalignment Visualization}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.65\textheight,keepaspectratio]{attachment/01d3d9f509e1ec000f100a1ca1339a3c.png}
+        \caption{Visualization of emergent misalignment patterns}
+    \end{figure}
+\end{frame}
+
+\section{Proposed Research Direction}
+\begin{frame}{Future Research Directions}
+    \begin{itemize}
+        \item \textbf{Key Goal:} Invent new method to specifically study emergent agent misalignment
+        \item Approach: Use mechanistic framework to interpret this behavior (like my last paper)
+        \item \textbf{Key Challenge:} Past works focus on single input-output, while agents are inherently multi-turn
+        \item Need interpretation method that captures remote connections in agent context
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Research Framework Requirements}
+    \begin{itemize}
+        \item Must capture connections between:
+        \begin{itemize}
+            \item System prompt
+            \item Different clues
+            \item Tool calls
+        \end{itemize}
+        \item \textbf{Key Point:} Need multi-turn interpretation methodology
+        \item Focus on understanding how misalignment emerges across interactions
+    \end{itemize}
+\end{frame}
+
+\end{document}

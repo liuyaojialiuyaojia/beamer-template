@@ -1,0 +1,49 @@
+.DS_Store
+
+# LaTeX 编译产生的临时文件
+# 辅助文件，包含交叉引用信息
+*.aux
+# 编译日志文件
+*.log
+# Beamer导航栏文件
+*.nav
+# hyperref包产生的书签文件
+*.out
+# Beamer幻灯片注释文件
+*.snm
+# 目录文件
+*.toc
+# latexmk构建工具的数据库文件
+*.fdb_latexmk
+# 文件列表，记录编译过程中使用的文件
+*.fls
+# 同步文件，用于PDF和源代码之间的同步定位
+*.synctex.gz
+
+# 其他可能的LaTeX临时文件
+# 参考文献编译后的文件
+*.bbl
+# BibTeX日志文件
+*.blg
+# 设备无关文件格式
+*.dvi
+# 索引文件
+*.idx
+# makeindex日志文件
+*.ilg
+# 处理后的索引文件
+*.ind
+# 图片列表
+*.lof
+# 表格列表
+*.lot
+# Biblatex控制文件
+*.bcf
+# Biblatex运行信息文件
+*.run.xml
+# Biblatex辅助文件
+*-blx.aux
+# Biblatex临时文件
+*-blx.bib
+# Beamer的verbatim文件
+*.vrb
