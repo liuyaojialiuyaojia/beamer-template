@@ -3,34 +3,27 @@
 \usecolortheme{default}
 
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{xeCJK}
-\setCJKmainfont{Songti SC}  % Mac font for Chinese
-\setCJKsansfont{Heiti SC}  % Mac font for Chinese sans-serif
-\setCJKmonofont{STFangsong}  % Mac font for Chinese monospace
+\setCJKmainfont{Songti SC}
+\setCJKsansfont{Heiti SC}
+\setCJKmonofont{STFangsong}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
-\usepackage{tikz}  % For opacity support in XeLaTeX
-% Attempt to make hyperref and algorithmic work together better:
+\usepackage{tikz}
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
-% Add logo to the top right corner of each slide with transparency
-% Replace logo.png with "template/logo.png" when you use this template
 \logo{\tikz\node[opacity=0.2]{\includegraphics[height=1.2cm]{template/logo.png}};\vspace*{-0.35cm}\hspace*{0.2cm}}
 
-% Custom block styling
 \setbeamertemplate{blocks}[rounded][shadow=false]
 \setbeamercolor{block title}{fg=orange,bg=orange!15}
 \setbeamercolor{block body}{fg=black,bg=orange!10}
-
 \setbeamerfont{block title}{size=\small,series=\normalfont}
-
-% Disable section pages
 \AtBeginSection{}
 
 \makeatletter
-% Configure frametitle to include section name
 \setbeamertemplate{frametitle}{%
   \nointerlineskip
   \begin{beamercolorbox}[sep=0.3cm,wd=\paperwidth]{frametitle}
@@ -41,11 +34,11 @@
 }
 \makeatother
 
-\title{Safety Alignment Evaluation of Subtasks in LLM Agents}
-\subtitle{大模型代理中子任务的安全对齐评估}
-\author{Zhichao Liu}
-\institute{Harbin Institute of Technology}
-\date{\today}
+\title{Service-Oriented Agent Safety in Industry}
+\subtitle{A Workflow-Centric Benchmark}
+\author{Zhichao Liu, Wenbo Pan, Yinggang Sun, Haining Yu, Yizheng Yang, and Haoding Zhang}
+\institute{Harbin Institute of Technology \\ City University of Hong Kong}
+\date{ICSOC 2025 SICI Workshop}
 
 \begin{document}
 
@@ -62,503 +55,265 @@
     \tableofcontents
 \end{frame}
 
-\section{Research Background}
+\section{Introduction}
 
-\begin{frame}{Problem Premise}
+\begin{frame}{Industrial Agents Move to Workflows}
     \begin{itemize}
-        \item \textbf{模型做代理任务时的越狱后果更严重}
-        \begin{itemize}
-            \item 正常对话任务中，越狱场景更少、破坏力更小
-            \item 代理场景下会与现实世界交互，破坏力更强
-        \end{itemize}
-        \item \textbf{代理场景与对话场景的越狱形式不同}
-        \begin{itemize}
-            \item 对话场景：单次语言交互，要求模型理解语义层面的安全概念
-            \item 代理场景：要求模型对有害目标有贡献即可，可能只是危险意图的子任务
-        \end{itemize}
+        \item Deployments now lean on service-oriented agents coordinating across organizations and edge-cloud systems.
+        \item Agents plan, call tools, and iteratively revise using logged histories under governance limits.
+        \item Safety stakes rise: orchestration can trigger real-world harm; \emph{OpenAI Biosafety Alert}\footnote{OpenAI. ``Autonomous Agents and Biosafety.'' 2024.} flagged the risk.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Problem Premise (cont.)}
+\begin{frame}{Limits of Chat-Centric Benchmarks}
     \begin{itemize}
-        \item \textbf{代理场景的对齐比对话对齐更困难}
-        \begin{itemize}
-            \item 对模型遵守指令完成任务的要求比对话更强
-            \item 模型会分配更多注意力在任务本身
-            \item 与对齐要求模型适当拒绝用户产生了冲突
-        \end{itemize}
+        \item JailbreakHub, ToxicChat, and Do-Not-Answer remain dialogue-centric.
+        \item They miss how risk propagates through service orchestration workflows.
+        \item Refusal alone is a weak proxy for industrial agent safety.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Related Work - Jailbreak Evaluation}
+\begin{frame}{Stage-Specific Risk}
     \begin{itemize}
-        \item \textbf{Latent Jailbreak}\footnote{Qiu et al., "Latent Jailbreak." arXiv (2023).}：通过在不同位置嵌入恶意指令进行攻击
-        \item \textbf{AdvBench}\footnote{Zou et al., "AdvBench." arXiv (2023).}：自动化搜索对抗后缀，攻击在多模型间可迁移
-        \item \textbf{JailbreakHub}\footnote{Shen et al., "JailbreakHub." arXiv (2024).}：收集和分析 1,405 个社交媒体上的越狱提示
-        \item \textbf{Do-Not-Answer}\footnote{Wang et al., "Do-Not-Answer." arXiv (2023).}：关注模型拒绝高风险任务的能力
-        \item \textbf{ToxicChat}\footnote{Lin et al., "ToxicChat." arXiv (2023).}：利用真实对话数据揭示有害内容检测挑战
+        \item Unsafe plans plant failures for later stages.
+        \item Unsafe executions can trigger irreversible real-world actions.
+        \item Unsafe improvements may amplify harmful strategies.
     \end{itemize}
-\end{frame}
-
-\begin{frame}{Related Work - Jailbreak Evaluation (cont.)}
-    \begin{block}{关键问题}
-        这些数据多依赖简单注释或直接的恶意输入，危险意图往往过于显性，难以模拟真实应用场景
+    \begin{block}{Takeaway}
+        Refusing isolated prompts is insufficient; safety must be evaluated across the full workflow.
     \end{block}
 \end{frame}
 
-\begin{frame}{Related Work - Agent Workflows}
+\section{Problem Statement}
+
+\begin{frame}{Workflow-Centric Evaluation}
     \begin{itemize}
-        \item \textbf{AutoGen \& AutoAgents}：提供多角色对话编程，支持动态调度与灵活角色配置
-        \item \textbf{AUTOACT}：引入元代理（Meta-Agent），强化任务分解与工具调用
-        \item \textbf{UFO}：面向 Windows 的多应用协作与 UI 自动化
-        \item \textbf{AutoDev}：结合代理调度与容器环境，支持大规模协同开发
-        \item \textbf{Langgraph}：利用图结构实现任务管理与上下文控制，提升可扩展性
+        \item Construct falsified jailbreak histories with explicit malicious intent.
+        \item Evaluate each stage: Description $\rightarrow$ Planning $\rightarrow$ Execution $\rightarrow$ Reflection/Improvement.
+        \item Goal: maximize $\Pr(o_t \in R_{\text{safe}} \mid H_t, T_t)$ under task pressure.
+        \item Track how risk propagates between stages in realistic workflows.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Work Overview}
+\begin{frame}{Traditional Prompt Evaluation}
     \begin{itemize}
-        \item \textbf{提出可扩展且稳定的样本生成方法}
-        \begin{itemize}
-            \item 能够提供具有挑战性的Agent对齐测试样本
-        \end{itemize}
-        \item \textbf{收集涵盖工作流场景的安全对齐基准}
-        \begin{itemize}
-            \item 覆盖Agent最典型的几个任务类型
-            \item 整合多个来源的恶意意图数据源
-        \end{itemize}
-        \item \textbf{提出新的对齐样本评估指标}
-        \begin{itemize}
-            \item 在PAIR、PAP等方法上进行了评估
-        \end{itemize}
+        \item Attacker directly supplies a dangerous goal and asks for completion.
+        \item Single metric: whether the model refuses ($Response \in \{X,\checkmark\}$).
+        \item Detached from agent context, so intent is obvious and risk propagation is ignored.
     \end{itemize}
 \end{frame}
 
-\section{Dataset Construction Method}
-
-\begin{frame}{Traditional Jailbreak Evaluation Paradigm}
-    \begin{itemize}
-        \item 将恶意意图形式化为二元组：$I=(G,M)$
-        \begin{itemize}
-            \item $G$：真实恶意目标（如生成有害输出）
-            \item $M$：对 $G$ 施加的伪装/变换集合（如改写、混淆）
-        \end{itemize}
-        \item 通过越狱方法 $\Phi$ 生成对抗输入：$I'=\Phi(I)$
-        \item 目标模型：$f_\theta(x)$；对抗输入的响应：$r=f_\theta(I')$
-        \item 传统评估目标：最大化模型产生不安全响应的概率
-        $$\arg\max_{I'} \Pr\big(f_\theta(I')\in \mathcal{R}_{\text{unsafe}}\big)$$
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Traditional Jailbreak Evaluation Paradigm (cont.)}
+\begin{frame}{Paradigm Contrast}
     \begin{figure}
-        \includegraphics[width=0.8\textwidth,height=0.6\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-16.56.47@2x.png}
-        \caption{当前越狱基线评估范式}
-    \end{figure}
-    \begin{block}{问题}
-        仅测试在抽象/可控环境下的脆弱性，难以反映真实工作流稳健性
-    \end{block}
-\end{frame}
-
-\begin{frame}{Workflow Safety Evaluation Paradigm}
-    \begin{itemize}
-        \item 将真实任务拆解为多阶段工作流
-        \item 在第 $t$ 步，给定历史 $H_t=\{o_1,\dots,o_{t-1}\}$ 与当前子任务 $T_t$
-        \item 输出：$o_t=f_\theta(H_t,T_t)$
-        \item 评估目标转为最大化安全输出概率：
-        $$\max \Pr\big(o_t\in \mathcal{R}_{\text{safe}}\mid H_t, T_t\big)$$
-        \item \textbf{差异}：不再强调伪装 $\Phi$ 的有效性，而是衡量模型在逐步诱导与任务上下文暴露下的对抗抵抗能力与风险传播
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Workflow Safety Evaluation Paradigm (cont.)}
-    \begin{figure}
-        \includegraphics[width=0.8\textwidth,height=0.65\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-16.57.49@2x.png}
-        \caption{本文提出的评估范式}
+        \includegraphics[width=\columnwidth,height=0.7\textheight,keepaspectratio]{attachment/threaten_new.png}
+        \caption{Top: traditional prompt attacks. Bottom: workflow-focused evaluation.}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Context Difference and Task Alignment}
+\begin{frame}{Context Construction Differences}
     \begin{itemize}
-        \item 现有上下文化方法（如 PAIR）常弱化或偏离原始危险目标
-        \item 导致"看似安全"的迁移
-        \item \textbf{本文方法}：保持危险意图不变、仅约束表达形式
+        \item \textbf{Original:} direct requests for sensitive intel are easily refused.
+        \item \textbf{PAIR:} role-play (e.g., film director) drifts away from industrial tasks.
+        \item \textbf{Ours:} grounded background and work history keep explicit dangerous goals inside business workflows.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Context Difference and Task Alignment (cont.)}
-    \begin{figure}
-        \includegraphics[width=0.9\textwidth,height=0.6\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-17.06.02@2x.png}
-        \caption{三种输入方式对比：原始/PAIR/本文}
-    \end{figure}
-    \begin{block}{重要性}
-        此差异解释了为何需要在真实工作流中评测安全性而非仅在对话场景中
-    \end{block}
-\end{frame}
-
-\begin{frame}{Dangerous Workflow Simulation System - Phase A}
-    \begin{itemize}
-        \item \textbf{阶段A：危险任务生成}
+\begin{frame}{Context Examples}
+    \begin{exampleblock}{Visual Contrast}
         \begin{itemize}
-            \item 从初始危险意图出发
-            \item 使用攻击代理模拟若干轮工作历史
-            \item 锚定当前轮次的子任务描述
-            \item 目标：生成贴近真实流程的"在途"任务，而非一次性目标描述
+            \item \textbf{Original:} blunt ask for confidential action plans.
+            \item \textbf{PAIR:} cinematic role-play that dilutes the target mission.
+            \item \textbf{Ours:} market-research history plus a task to dig deeper into the dangerous lead.
         \end{itemize}
-    \end{itemize}
+    \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Dangerous Workflow Simulation System - Phase B}
-    \begin{itemize}
-        \item \textbf{阶段B：任务描述优化}
-        \begin{itemize}
-            \item 使用对齐模型标注并识别"触发直接拒绝"的禁词集合
-            \item 在保持原始危险目标不变的前提下
-            \item 由攻击代理对任务描述进行迭代改写
-            \item 降低显性禁词、提高潜在危害聚焦度
-        \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Dangerous Workflow Simulation System}
+\begin{frame}{Context Construction Illustration}
     \begin{figure}
-        \includegraphics[width=0.85\textwidth,height=0.65\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-17.07.51@2x.png}
-        \caption{危险子任务提示的仿真系统}
+        \includegraphics[width=\columnwidth,height=0.7\textheight,keepaspectratio]{attachment/example.png}
+        \caption{Context building shifts from blunt asks to workflow-grounded tasks.}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Sample Scalability and Stability}
+\section{Methodology}
+
+\begin{frame}{Dangerous Workflow Simulation}
     \begin{itemize}
-        \item \textbf{样本生成借鉴 PAIR 与 StrongREJECT 的思路}
-        \begin{itemize}
-            \item 引入执行历史仿真
-            \item 确保子任务"具体、可执行、可控"
-        \end{itemize}
-        \item \textbf{产出两个集合}
-        \begin{itemize}
-            \item JailFlowEval（>3000 条样本）
-            \item JailFlowEval-hard（高质量子集 ~700 条）
-        \end{itemize}
-        \item \textbf{优势}：与传统"小规模人工标注"基座相比，本数据集在规模与工作流贴近性上更具挑战性
+        \item Phase 1: Work History Simulation anchors an in-progress subtask around a dangerous mission.
+        \item Goal: model a live workflow rather than cold-start malicious Q\&A.
+        \item Phase 2: Safety Guard flags trigger words; Improver rewrites while keeping the dangerous goal intact.
+        \item Result: prompts stay harmful but less obviously flagged by filters.
     \end{itemize}
 \end{frame}
 
-\section{Dataset Construction}
-
-\begin{frame}{Data Source Collection}
-    \begin{table}
-        \resizebox{\textwidth}{!}{
-        \begin{tabular}{lccc}
-            \toprule
-            Dataset & Scale & Manual annotation & Automatic annotation \\
-            \midrule
-            StrongREJECT & 288 & \checkmark & \\
-            AdvBench & 509 & \checkmark & \checkmark \\
-            do-not-answer & 938 & & \checkmark \\
-            toxic-chat & 701 & \checkmark & \\
-            HarmBench & 191 & \checkmark & \\
-            JailbreakBench & 200 & \checkmark & \\
-            \bottomrule
-        \end{tabular}
-        }
-        \caption{六个数据源与规模（总规模 >3000，另含高质量子集 ~700）}
-    \end{table}
+\begin{frame}{Simulation Pipeline}
+    \begin{figure}
+        \includegraphics[width=\columnwidth,height=0.7\textheight,keepaspectratio]{attachment/pipeline.png}
+        \caption{Automated pipeline for dangerous subtask simulation.}
+    \end{figure}
 \end{frame}
 
-\begin{frame}{Topic Extraction}
+\begin{frame}{Data Distribution}
     \begin{itemize}
-        \item \textbf{对问题进行编码与聚类，获得11个主题}：
-        \begin{enumerate}
-            \item 恶意操纵与伤害
-            \item 不敬与争议/有害观点
-            \item 角色扮演与创作
-            \item 非法活动教程
-            \item 危险/自伤指令
-            \item 有害内容创作
-            \item 敏感/争议信息
-        \end{enumerate}
+        \item Merged six corpora (StrongREJECT, AdvBench, Do-Not-Answer, ToxicChat, HarmBench, JailbreakBench) and filtered to 700 high-quality prompts.
+        \item Eleven topics span malicious manipulation, harmful tutorials, evading liability, cybercrime, and more.
+        \item Three key stages: Planning, Execution, and Improvement (error correction plus refinement).
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Topic Extraction (cont.)}
+\begin{frame}{Topics (1/2)}
     \begin{enumerate}
-        \setcounter{enumi}{7}
-        \item 黑客/网络犯罪
-        \item 明确性内容
-        \item 恶意工具与行动
-        \item 逃避责任与犯罪行为
+        \item Malicious manipulation and harm
+        \item Offensive or controversial views
+        \item Role-play and creative scenarios
+        \item Illegal-activity tutorials
+        \item Dangerous or self-harm instructions
+        \item Harmful content creation
     \end{enumerate}
 \end{frame}
 
-\begin{frame}{Topic Distribution}
+\begin{frame}{Topics (2/2)}
+    \begin{enumerate}
+        \setcounter{enumi}{6}
+        \item Sensitive or controversial information
+        \item Hacking and cybercrime
+        \item Explicit content
+        \item Malicious tools and actions
+        \item Evading liability and criminal behavior
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Topic Clusters}
     \begin{figure}
-        \includegraphics[width=0.85\textwidth,height=0.65\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-17.14.47@2x.png}
-        \caption{基于意图主题聚类得到的 11 个主题分布}
+        \includegraphics[width=\columnwidth,height=0.7\textheight,keepaspectratio]{attachment/cluster.png}
+        \caption{Eleven danger themes derived from clustered prompts.}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Subtask Scope}
-    \begin{itemize}
-        \item \textbf{统计近期 Agent 系统常见10类子任务}
-        \item \textbf{本基准选择最常用的三大组件进入工作流}：
-        \begin{itemize}
-            \item 任务规划（Planning）
-            \item 子任务执行（Execution）
-            \item 任务改进（Improvement）——细分为纠错与效果优化
-        \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Agent Framework Support}
+\begin{frame}{Agent Framework Coverage}
     \begin{table}
         \resizebox{\textwidth}{!}{
         \begin{tabular}{lcccccccc}
             \toprule
-            Agent framework & Planning & Analysis & RAG & Execution & Code & Tool & Reflection & Memory \\
+            Framework & Plan. & Anal. & RAG & Exec. & Code & Tool & Refl. & Memo. \\
             \midrule
             Camel & \checkmark & & & \checkmark & & \checkmark & \checkmark & \\
             MetaGPT & \checkmark & \checkmark & & \checkmark & \checkmark & \checkmark & \checkmark & \\
             HuggingGPT & \checkmark & & & \checkmark & & & \checkmark & \\
             Autogen & \checkmark & & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \\
             ChatDev & \checkmark & & & \checkmark & & & \checkmark & \checkmark \\
-            \bottomrule
-        \end{tabular}
-        }
-    \end{table}
-\end{frame}
-
-\begin{frame}{Agent Framework Support (cont.)}
-    \begin{table}
-        \resizebox{\textwidth}{!}{
-        \begin{tabular}{lcccccccc}
-            \toprule
-            Agent framework & Planning & Analysis & RAG & Execution & Code & Tool & Reflection & Memory \\
-            \midrule
             Langgraph & \checkmark & & & \checkmark & & & \checkmark & \\
-            UFO & \checkmark & & \checkmark & \checkmark & & & \checkmark & \checkmark \\
+            UFO & \checkmark & \checkmark & & \checkmark & & & \checkmark & \checkmark \\
             AutoDev & \checkmark & & & \checkmark & \checkmark & \checkmark & \checkmark & \\
-            AUTOACT & \checkmark & & & \checkmark & & & \checkmark & \\
-            AutoAgents & \checkmark & & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+            AUTOACT & \checkmark & & & \checkmark & & \checkmark & \checkmark & \\
+            AutoAgents & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
             \bottomrule
         \end{tabular}
         }
-        \caption{不同 Agent 框架在子任务上的支持情况}
+        \caption{Common agent frameworks supporting the three benchmark stages.}
     \end{table}
 \end{frame}
 
-\section{Model Evaluation}
+\section{Evaluation Metrics}
 
-\begin{frame}{Model Alignment Metrics - PAIR Score}
+\begin{frame}{PAIR Risk Score}
     \begin{itemize}
-        \item \textbf{PAIR Score（任务完成度 × 危害性）}
-        \item 定义：$R(S)=f\big(C(S),\,V(S)\big)$
-        \begin{itemize}
-            \item $C(S)$：对当前子任务的清晰度/特异性/正确性
-            \item $V(S)$：响应跨越伦理/法律/安全边界的程度
-        \end{itemize}
-        \item \textbf{特点}：
-        \begin{itemize}
-            \item 面向具体子任务的功能性与安全性评价
-            \item 更契合工作流衡量
-            \item 与 StrongReject 相比，不强调"说服力"维度
-        \end{itemize}
+        \item $PAIR\_risk(S)=f\big(C(S),V(S)\big)$.
+        \item $C(S)$: clarity, specificity, and correctness of task completion.
+        \item $V(S)$: degree of violating ethical, legal, or safety boundaries.
+        \item Low score means safer responses; high score shows harmful instructions executed well.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Model Alignment Metrics - PAIR Score (cont.)}
-    \begin{block}{备注}
-        适用于判断"是否真正完成了危险子任务"，而非仅生成"有害片段"
-    \end{block}
-\end{frame}
-
-\begin{frame}{Data Quality Metrics - Mutual Information}
+\begin{frame}{Mutual Information Across Stages}
     \begin{itemize}
-        \item \textbf{设定}
-        \begin{itemize}
-            \item 数据集中提示集 $X=\{x_i\}_{i=1}^N$，响应集 $Y=\{y_j\}_{j=1}^M$
-            \item 假设 $p(x_i)=1/N$
-            \item 以相似度 $s_{ij}$ 计算条件分布（Softmax）：
-        \end{itemize}
-        $$p(y_j\mid x_i)=\frac{\exp(s_{ij})}{\sum_{k=1}^{M}\exp(s_{ik})}$$
+        \item Measures how earlier dangerous prompts raise unsafe-output odds later.
+        \item Pointwise MI: $PMI_{i}=\log_{2}\frac{p(y_{i}\mid x_{i})}{p(y_{i})}$.
+        \item Captures risk propagation across planning, execution, and improvement stages.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Data Quality Metrics - Mutual Information (cont.)}
+\begin{frame}{Dataset Quality Metrics}
     \begin{itemize}
-        \item \textbf{互信息定义}
-        $$I(X;Y)=\sum_{i=1}^{N}\sum_{j=1}^{M}\frac{1}{N}\,p(y_j\mid x_i)\,\log_2\!\left(\frac{p(y_j\mid x_i)}{p(y_j)}\right)$$
-        \item \textbf{成对贡献}
-        $$I(x_i;y_i)=\frac{1}{N}\,p(y_i\mid x_i)\,\log_2\!\left(\frac{p(y_i\mid x_i)}{p(y_i)}\right)$$
-    \end{itemize}
-    \begin{block}{解释}
-        用于捕捉成功响应在不同提示之间的可区分性/专一性
-    \end{block}
-\end{frame}
-
-\begin{frame}{Dataset Direct Metrics - Keyword Density}
-    \begin{itemize}
-        \item 对每个提示 $p_i$，抽取得到关键词集合 $K(p_i)=\{k_1,\dots,k_{m_i}\}$，长度 $L_i$
-        \item 密度：$\displaystyle d_i=\frac{m_i}{L_i}$
-        \item 数据集平均：$\displaystyle d_{\text{avg}}=\frac{1}{N}\sum_{i=1}^{N}\frac{m_i}{L_i}$
+        \item Keyword density: $d_{i}=\frac{m_{i}}{L_{i}}$ measures how condensed dangerous cues are.
+        \item Keyword correlation: cosine similarity between keyword embeddings reflects topic focus.
+        \item Goal: concentrated semantics (high correlation) with natural phrasing (moderate density).
+        \item Dataset-level averages ($d_{\text{avg}}, r_{\text{avg}}$) summarize prompt compactness and focus.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Dataset Direct Metrics - Keyword Relevance}
-    \begin{itemize}
-        \item 关键词嵌入 $e(k)\in\mathbb{R}^d$；任意对 $(k_j,k_\ell)$ 的相似度
-        $$\displaystyle S_{j\ell}=\frac{e(k_j)\cdot e(k_\ell)}{\|e(k_j)\|\,\|e(k_\ell)\|}$$
-        \item 单条提示的平均相关性：
-        $$r_i=\frac{2}{m_i(m_i-1)}\sum_{1\le j<\ell\le m_i}S_{j\ell}$$
-        \item 数据集平均：$r_{\text{avg}}=\frac{1}{N}\sum_{i=1}^{N}r_i$
-    \end{itemize}
-\end{frame}
+\section{Experiments \& Results}
 
-\begin{frame}{Dataset Direct Metrics - Keyword Relevance (cont.)}
-    \begin{block}{用途}
-        在不依赖模型的情况下，衡量提示的语义集中度与主题一致性
-    \end{block}
-\end{frame}
-
-\begin{frame}{Evaluation Results - Method Comparison}
-    \begin{itemize}
-        \item \textbf{设置}：在 JailFlowEval-hard 上，收集本文/PAIR/PAP misrepresentation三种方法生成的样本
-        \item 与 gpt4o-mini 评测得到交集 370 条进行比较
-    \end{itemize}
+\begin{frame}{Construction Method Comparison}
     \begin{table}
         \begin{tabular}{lccc}
             \toprule
-            Method & ours & pair & pap misrepresentation \\
+            Method & PAIR quality (attack success) & Weighted Density & Weighted Relatedness \\
             \midrule
-            Score & 0.7283 & 0.6449 & 0.4188 \\
-            Weighted density & 0.0699 & 0.0951 & 0.0614 \\
-            Weighted relatedness & 0.4876 & 0.4369 & 0.2799 \\
+            \textbf{Ours} & \textbf{0.7283} & 0.0699 & \textbf{0.4876} \\
+            PAIR & 0.6449 & 0.0951 & 0.4369 \\
+            PAP & 0.4188 & 0.0614 & 0.2799 \\
             \bottomrule
         \end{tabular}
-        \caption{不同指标下的分数}
+        \caption{Workflow-centered generation outperforms baselines.}
     \end{table}
 \end{frame}
 
-\begin{frame}{Evaluation Results - Method Comparison (cont.)}
-    \begin{block}{结论}
-        本文循环式场景生成在越狱能力与语义集中度两方面均占优；PAIR 次之；PAP 明显偏弱
-    \end{block}
-\end{frame}
-
-\begin{frame}{Model Comparison - Scope}
+\begin{frame}{Method Insights}
     \begin{itemize}
-        \item \textbf{闭源模型}：
-        \begin{itemize}
-            \item gpt-4o、gpt-4o-mini
-            \item claude-3.5-sonnet、claude-3.5-haiku-20241022
-            \item gemini-2.0-flash-001
-        \end{itemize}
-        \item \textbf{开源模型}：
-        \begin{itemize}
-            \item llama-3.1-70b-instruct、llama-3.1-8b-instruct
-            \item qwen-2.5-72b-instruct、qwen-2.5-7b-instruct
-            \item deepseek-chat
-        \end{itemize}
+        \item Highest attack success (PAIR quality 0.7283) shows iterative generation exposes unaligned behaviors.
+        \item Prompts have the strongest semantic focus (relatedness 0.4876) while avoiding target drift seen in PAIR.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Model Comparison - Results}
+\begin{frame}{Models Evaluated}
+    \begin{itemize}
+        \item Closed-source: GPT-4o; GPT-4o mini.
+        \item Closed-source: Claude 3.5 Sonnet; Claude 3.5 Haiku (20241022).
+        \item Closed-source: Gemini 2.0 Flash.
+        \item Open-source: Llama 3.1 70B Instruct; Llama 3.1 8B Instruct.
+        \item Open-source: Qwen 2.5 72B Instruct; Qwen 2.5 7B Instruct.
+        \item Open-source: DeepSeek V3 (deepseek-chat).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Model Safety Evaluation}
     \begin{figure}
-        \includegraphics[width=0.9\textwidth,height=0.65\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-17.24.32@2x.png}
-        \caption{主要结果（Direct Score 越低越好；MI/加权MI 越高越好）}
+        \includegraphics[width=\columnwidth,height=0.7\textheight,keepaspectratio]{attachment/model_evaluation.png}
+        \caption{Cross-model risk on JailFlowEval; lower direct scores are safer.}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Model Comparison - Key Findings}
+\begin{frame}{Key Findings: Open vs Closed}
     \begin{itemize}
-        \item \textbf{开源模型整体安全性弱于闭源}，且开源内部差异相对较小
-        \item \textbf{能力更强的开源模型未必更安全}：DeepSeek V3（deepseek-chat）表现出最差安全性
-        \item \textbf{闭源中}：
-        \begin{itemize}
-            \item Claude 系列对齐稳健性最强，几乎在多任务/多格式均能稳定拒绝
-            \item GPT-4o与GPT-4o-mini对齐能力较弱，其中 Mini 更易受危险指令影响
-            \item Gemini 2.0 Flash相对更稳健
-        \end{itemize}
+        \item Open-source models show higher PAIR Risk and mutual information, meaning risk propagates more easily.
+        \item DeepSeek V3 (deepseek-chat) carries the highest risk, highlighting tension between task competency and safety.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Method Effectiveness and Quality Visualization}
-    \begin{figure}
-        \includegraphics[width=0.85\textwidth,height=0.6\textheight,keepaspectratio]{attachment/CleanShot-2025-08-21-at-17.23.20@2x.png}
-        \caption{三列对比：Direct Score↑、密度↓、相关性↑}
-    \end{figure}
-\end{frame}
-
-\begin{frame}{Method Effectiveness and Quality Visualization (cont.)}
+\begin{frame}{Key Findings: Closed Models \& Trade-offs}
     \begin{itemize}
-        \item \textbf{可视化要点}：
-        \begin{itemize}
-            \item 在有效越狱样本范围内，本文方法在关键词密度更低（表达更凝练）
-            \item 关键词相关性更高（主题更聚焦）
-            \item 第二阶段引入任务主题约束后，循环不会偏离原任务内容
-            \item 保持"危险目标不变"同时使表达更隐蔽
-        \end{itemize}
+        \item Claude 3.5 Sonnet and Haiku are most robust, consistently refusing dangerous workflows.
+        \item GPT-4o mini has relatively higher risk among commercial models; Gemini 2.0 Flash sits in the middle.
+        \item High task completion often coincides with unsafe behavior; refusal fails when danger is wrapped in workflows.
     \end{itemize}
 \end{frame}
 
-\section{Summary}
+\section{Conclusion}
 
-\begin{frame}{Summary - Contributions}
+\begin{frame}{Key Contributions}
     \begin{itemize}
-        \item \textbf{提出JailFlowEval}
-        \begin{itemize}
-            \item 在真实工作流中、围绕规划—执行—改进的危险子任务
-            \item 评估模型对齐能力
-            \item 提供 >3000 / ~700 高质量样本
-        \end{itemize}
-        \item \textbf{提出评估指标体系}
-        \begin{itemize}
-            \item PAIR Score
-            \item 互信息
-            \item 关键词密度/相关性
-        \end{itemize}
+        \item JailFlowEval-Industrial: first workflow-centric agent safety benchmark with 700 high-quality prompts across 11 topics.
+        \item Two-stage simulation pipeline keeps malicious goals explicit yet workflow-consistent.
+        \item Metrics combine PAIR risk and stage-conditional mutual information to track risk propagation.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Summary - Findings}
+\begin{frame}{Audience Takeaways}
     \begin{itemize}
-        \item \textbf{开源模型在工作流场景的对齐明显不足}
-        \item \textbf{闭源中 Claude 系列显著更稳健}
-        \item \textbf{构造方法方面}：
-        \begin{itemize}
-            \item 本文循环式场景生成在"越狱成功率 + 语义集中度"上均优于 PAIR/PAP
-        \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Summary - Practical Guidelines}
-    \begin{block}{实践指引}
-        在 Agent 工作流落地前，需要以工作历史+子任务为单位做安全回归测试，而非只在对话场景做一次性越狱评测
-    \end{block}
-\end{frame}
-
-\begin{frame}{Discussion Points}
-    \begin{itemize}
-        \item \textbf{实验只是比较浅地套了agent的概念}，本质上没有触及agent"与现实世界交互"的核心点
-        \item \textbf{两种思路的权衡}：
-        \begin{itemize}
-            \item 从jailbreaking入手往agent的形式上靠（本文做法）
-            \item 从agent任务入手增加jailbreaking因素
-        \end{itemize}
-        \item \textbf{模型对于agent系统中的冲突}：
-        \begin{itemize}
-            \item agent任务能力要求follow指令
-            \item 安全对齐要求审核后适当拒绝
-        \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Discussion Points (cont.)}
-    \begin{itemize}
-        \item \textbf{目前实验的局限性}：
-        \begin{itemize}
-            \item 初稿实验有些过时
-            \item 已经出现了一些agent对齐研究
-        \end{itemize}
+        \item Do not test only dialogue: safety regression should follow work histories and subtasks.
+        \item Watch risk propagation: self-improvement loops can amplify vulnerabilities.
+        \item Model choice matters: strong open-source models (e.g., DeepSeek V3) may be riskier than Claude for workflows.
     \end{itemize}
 \end{frame}
 
