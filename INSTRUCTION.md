@@ -8,7 +8,7 @@ Convert the provided document (document.md) into a professional LaTeX Beamer pre
   - Break complex sentences into simpler ones
   - Simplify tedious expressions while preserving meaning
   - Improve clarity, conciseness, and readability
-- **Language**: Titles and headings in English, body content in Chinese.
+- **Language**: Titles and headings in English, body content in English.
 
 ## Formatting Guidelines
 - **Key points**: Use **bold text** for key points
